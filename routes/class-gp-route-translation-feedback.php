@@ -64,7 +64,11 @@ class GP_Route_Translation_Feedback extends GP_Route_Translation {
 			return $this->die_with_404();
 		}
 
-		$glossary = $this->get_extended_glossary( $translation_set, $project );
+		if ( method_exists( $this, 'get_extended_glossary' ) ) {
+			$glossary = $this->get_extended_glossary( $translation_set, $project );
+		} else {
+			$glossary = false;
+		}
 
 		$translation = GP::$translation->get( gp_post( 'translation_id' ) );
 

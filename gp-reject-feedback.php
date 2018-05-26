@@ -2,7 +2,7 @@
 /*
 Plugin Name: GP Reject With Feedback
 Description: Reviewers can provide rejection reasons and feedback when rejecting a translation.
-Version: 1.0
+Version: 1.0.0
 Author: David Stone
 Tags: glotpress, glotpress plugin
 License: GPLv2
