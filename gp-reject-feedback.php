@@ -14,7 +14,9 @@ define( 'GP_FEEDBACK_FILE', __FILE__ );
 // Add an action to WordPress's init hook to setup the plugin.  Don't just setup the plugin here as the GlotPress plugin may not have loaded yet.
 add_action( 'gp_init', 'gp_single_click_edit_init' );
 
-// This function creates the plugin.
+/**
+ * This function creates the plugin.
+ */
 function gp_single_click_edit_init() {
 	require GP_FEEDBACK_PATH . 'class-gp-reject-feedback.php';
 	new GP_Reject_Feedback();

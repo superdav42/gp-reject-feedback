@@ -42,12 +42,60 @@ class GP_Route_Translation_Feedback extends GP_Route_Translation {
 	}
 
 	/**
+	 * Action to save reject reasons, feedback and set status.
+	 *
+	 * @param string $project_path Project path from route.
+	 * @param string $locale_slug Locale slug from route.
+	 * @param string $translation_set_slug Translation set slug from route.
+	 * @return null
+	 */
+	public function update_row( $project_path, $locale_slug, $translation_set_slug ) {
+
+		$project = GP::$project->by_path( $project_path );
+		$locale  = GP_Locales::by_slug( $locale_slug );
+
+		if ( ! $project || ! $locale ) {
+			return $this->die_with_404();
+		}
+
+		$translation_set = GP::$translation_set->by_project_id_slug_and_locale( $project->id, $translation_set_slug, $locale_slug );
+
+		if ( ! $translation_set ) {
+			return $this->die_with_404();
+		}
+
+		$row_id = gp_get( 'row_id' );
+
+		list($orignal_id, $translation_id) = explode( '-', $row_id );
+
+		if ( empty( $translation_id ) ) {
+			return $this->die_with_404();
+		}
+
+		$translations = GP::$translation->for_translation(
+			$project, $translation_set, 'no-limit', array(
+				'translation_id' => $translation_id,
+				'status'         => 'either',
+			), array()
+		);
+
+		$can_edit = $this->can( 'edit', 'translation-set', $translation_set->id );
+
+		$template_vars = array(
+			'can_edit'     => $can_edit,
+			'translations' => $translations,
+		);
+
+		gp_tmpl_load( 'reject-reasons-translations-footer', $template_vars, GP_FEEDBACK_PATH . 'templates/' );
+	}
+
+	/**
 	 * Copied from base since it's private.
 	 *
-	 * @param string   $project_path
-	 * @param string   $locale_slug
-	 * @param string   $translation_set_slug
-	 * @param callable $edit_function
+	 * @param string   $project_path Project path from route.
+	 * @param string   $locale_slug Locale slug from route.
+	 * @param string   $translation_set_slug Translation set slug from route.
+	 * @param callable $edit_function Callback to run which updates translation.
 	 * @return string
 	 */
 	private function edit_single_translation( $project_path, $locale_slug, $translation_set_slug, $edit_function ) {
@@ -103,7 +151,7 @@ class GP_Route_Translation_Feedback extends GP_Route_Translation {
 	/**
 	 * Copied from base since it's private.
 	 *
-	 * @param object $translation
+	 * @param object $translation Translation to check.
 	 * @return void
 	 */
 	private function can_approve_translation_or_forbidden( $translation ) {
@@ -117,9 +165,9 @@ class GP_Route_Translation_Feedback extends GP_Route_Translation {
 	/**
 	 * Copied form base tranlations_post() with a few changes to keep the current user_id.
 	 *
-	 * @param string $project_path
-	 * @param string $locale_slug
-	 * @param string $translation_set_slug
+	 * @param string $project_path Project path from route.
+	 * @param string $locale_slug Locale slug from route.
+	 * @param string $translation_set_slug Translation set slug from route.
 	 * @return string
 	 */
 	public function translations_keep_user_post( $project_path, $locale_slug, $translation_set_slug ) {

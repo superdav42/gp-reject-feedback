@@ -28,7 +28,7 @@ class GP_Reject_Feedback {
 	/**
 	 * Before request action which adds other hooks only when needed.
 	 *
-	 * @param string $class_name
+	 * @param string $class_name Class of route being requested.
 	 * @return void
 	 */
 	public function before_request( $class_name ) {
@@ -37,15 +37,15 @@ class GP_Reject_Feedback {
 		}
 
 		add_action( 'gp_pre_tmpl_load', array( $this, 'pre_tmpl_load' ), 10, 2 );
-		add_filter( 'gp_tmpl_load_locations', array( $this, 'template_load_locations' ), 10, 4 );
+		add_action( 'gp_post_tmpl_load', array( $this, 'post_tmpl_load' ), 10, 2 );
 		add_action( 'gp_footer', array( $this, 'gp_footer' ) );
 	}
 
 	/**
 	 * Hook to register styles and js but only on translations page.
 	 *
-	 * @param string $template
-	 * @param array  $args
+	 * @param string $template Template file loaded.
+	 * @param array  $args Template vars passed.
 	 * @return void
 	 */
 	public function pre_tmpl_load( $template, $args ) {
@@ -63,9 +63,25 @@ class GP_Reject_Feedback {
 		wp_localize_script(
 			'gp-reject-feedback-editor', '$gp_editor_feedback_options', array(
 				'reject_feedback_url' => gp_url_project( $args['project'], gp_url_join( $args['locale']->slug, $args['translation_set']->slug, '-reject-feedback' ) ),
+				'update_row_url'      => gp_url_project( $args['project'], gp_url_join( $args['locale']->slug, $args['translation_set']->slug, '-update-row' ) ),
 				'keep_user_url'       => gp_url_project( $args['project'], gp_url_join( $args['locale']->slug, $args['translation_set']->slug, '-keep-user' ) ),
 			)
 		);
+	}
+
+	/**
+	 * Ran after template loaded to append content.
+	 *
+	 * @param string $template Template file loaded.
+	 * @param array  $args Template vars passed.
+	 * @return void
+	 */
+	public function post_tmpl_load( $template, $args ) {
+		if ( 'translations' !== $template ) {
+			return;
+		}
+
+		gp_tmpl_load( 'reject-reasons-translations-footer', $args, GP_FEEDBACK_PATH . 'templates/' );
 	}
 
 	/**
@@ -80,14 +96,15 @@ class GP_Reject_Feedback {
 		$set      = "$project/$locale/$dir";
 
 		GP::$router->prepend( "/$set/-reject-feedback", array( 'GP_Route_Translation_Feedback', 'reject_feedback' ), 'post' );
+		GP::$router->prepend( "/$set/-update-row", array( 'GP_Route_Translation_Feedback', 'update_row' ), 'get' );
 		GP::$router->prepend( "/$set/-keep-user", array( 'GP_Route_Translation_Feedback', 'translations_keep_user_post' ), 'post' );
 	}
 
 	/**
 	 * Add our template location to override core.
 	 *
-	 * @param array  $locations
-	 * @param string $template
+	 * @param array  $locations Array or current locations to search.
+	 * @param string $template Current template loading.
 	 * @return array
 	 */
 	public function template_load_locations( $locations, $template ) {

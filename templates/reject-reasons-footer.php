@@ -1,6 +1,11 @@
 <?php
+/**
+ * Template 'reject-reasons-footer'
+ *
+ * @package GP_Reject_Feedback
+ */
 
-$reject_reasons = get_reject_reasons( $project );
+$reject_reasons = get_reject_reasons();
 ?>
 
 <script type="text/template" id="reject-reasons-template">

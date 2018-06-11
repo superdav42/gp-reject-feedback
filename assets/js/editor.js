@@ -5,20 +5,50 @@
 		return false;
 	};
 
+	var updateEachRow = function () {
+		$( '#editor-' + $( this ).data( 'replace-id' ) + ' ' + $( this ).data( 'selector' ) ).replaceWith( $( this ) );
+	};
+
 	$(
 		function () {
-				$( $gp.editor.table )
-				.off( 'keydown', 'tr.editor textarea', $gp.editor.hooks.keydown ) // remove then add so ours will be ran first
-				.on( 'keydown', 'tr.editor textarea', $gp.editor.reject_keydown )
-				.on( 'keydown', 'tr.editor textarea', $gp.editor.hooks.keydown )
-				.on(
-					'click', 'button.fix', function  () {
-						$gp.editor.fix_save( $( this ) );
-						return false;
-					}
-				);
+			$( $gp.editor.table )
+			.off( 'keydown', 'tr.editor textarea', $gp.editor.hooks.keydown ) // remove, then add so ours will be ran first.
+			.on( 'keydown', 'tr.editor textarea', $gp.editor.reject_keydown )
+			.on( 'keydown', 'tr.editor textarea', $gp.editor.hooks.keydown )
+			.on(
+				'click', 'button.fix', function  () {
+					$gp.editor.fix_save( $( this ) );
+					return false;
+				}
+			);
+
+			$( '#js-replace-content div' ).each( updateEachRow );
+			$( '#js-replace-content' ).remove();
 		}
 	);
+
+	var parent_replace_current = $gp.editor.replace_current;
+
+	$gp.editor.replace_current = function( html ) {
+		parent_replace_current( html );
+
+		if ( ! $gp.editor.current ) {
+			return;
+		}
+
+		$.ajax(
+			{
+				type: 'GET',
+				url: $gp_editor_feedback_options.update_row_url,
+				data: {
+					row_id: $( html ).attr( 'row' )
+				},
+				success: function( html ) {
+					$( html ).find( 'div' ).each( updateEachRow );
+				}
+			}
+		);
+	};
 
 	$gp.editor.reject_keydown = function ( e ) {
 		var reject, pos;
